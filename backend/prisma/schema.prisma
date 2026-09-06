@@ -1,0 +1,142 @@
+// Prisma schema for Utopia — Break the Code
+// Mirrors the PRD's "Suggested Database Schema" (Section 11)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum ChallengeType {
+  MCQ
+  OUTPUT_PREDICTION
+  BUG_IDENTIFICATION
+  FILL_IN_BLANK
+  FLAG_SUBMISSION
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  passwordHash String
+  year        Int
+  branch      String
+  createdAt   DateTime @default(now())
+
+  teamMemberships TeamMember[]
+  submissions     Submission[]
+  scores          Score[]
+}
+
+model Event {
+  id        String      @id @default(uuid())
+  name      String
+  status    EventStatus @default(DRAFT)
+  duration  Int // minutes
+  startTime DateTime?
+  endTime   DateTime?
+
+  teams      Team[]
+  challenges Challenge[]
+  scores     Score[]
+}
+
+model Team {
+  id      String @id @default(uuid())
+  name    String
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  members TeamMember[]
+  scores  Score[]
+
+  @@unique([eventId, name])
+}
+
+model TeamMember {
+  id     String @id @default(uuid())
+  teamId String
+  userId String
+  team   Team   @relation(fields: [teamId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([teamId, userId])
+}
+
+model Challenge {
+  id          String        @id @default(uuid())
+  eventId     String
+  event       Event         @relation(fields: [eventId], references: [id])
+  level       Int // 1-5
+  title       String
+  type        ChallengeType
+  difficulty  Difficulty
+  points      Int
+  answer      String // correct answer or flag
+  explanation String?
+
+  options     ChallengeOption[]
+  hints       Hint[]
+  submissions Submission[]
+}
+
+model ChallengeOption {
+  id          String    @id @default(uuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  optionText  String
+  isCorrect   Boolean   @default(false)
+}
+
+model Hint {
+  id          String    @id @default(uuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  hintText    String
+  cost        Int // points deducted when used
+}
+
+model Submission {
+  id          String    @id @default(uuid())
+  userId      String?
+  teamId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  answer      String
+  isCorrect   Boolean
+  points      Int
+  submittedAt DateTime  @default(now())
+}
+
+model Score {
+  id             String   @id @default(uuid())
+  userId         String?
+  teamId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  team           Team?    @relation(fields: [teamId], references: [id])
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id])
+  totalScore     Int      @default(0)
+  completionTime Int? // seconds, for tie-break
+
+  @@unique([userId, eventId])
+  @@unique([teamId, eventId])
+}
