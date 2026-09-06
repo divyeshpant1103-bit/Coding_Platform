@@ -1,22 +1,32 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
     extend: {
       colors: {
-        // Mission/game aesthetic per PRD section 17
-        "utopia-bg": "#0a0e1a",
-        "utopia-accent": "#00e5ff",
-        "utopia-warn": "#ff2e63",
-        "utopia-success": "#39ff14",
+        saas: {
+          dark: '#080313', // Deep background inside the screen
+          purple: '#9333EA', // Vibrant accent purple
+          glow: '#C084FC', // Soft background glow
+          gray: '#A1A1AA', // Subtext gray
+        }
       },
-      fontFamily: {
-        mono: ["'JetBrains Mono'", "monospace"],
+      animation: {
+        'marquee': 'marquee 25s linear infinite',
       },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        }
+      }
     },
   },
   plugins: [],
-};
-
-export default config;
+}
+export default config
